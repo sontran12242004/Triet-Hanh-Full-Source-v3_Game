@@ -1,0 +1,16 @@
+{
+  "source_commit": "97920b0ff77230aa5cc4d99f7bccbabc9f1013b1",
+  "source_version": 11,
+  "date": "2026-09-28",
+  "logical_width": 1440,
+  "logical_height": 900,
+  "files": {
+    "assets/maps/china.webp": "006b2837a83e9050b4f2d6141a742caec27fa42580b0ca366a488ad98bc774e9",
+    "assets/maps/england.webp": "978d4e2b5104895077aa87fddbcdfe8673a3e01ce03bee68382b3d0f624b6fe5",
+    "assets/maps/france.webp": "1726c840610c9ce0b11717cdd7fa2d6759a961d88d5ade806875ff77cedbccde",
+    "assets/maps/germany.webp": "9dfe7f2d0908cb9ac1b2b769d478ca4a6678bfcda0bd895bc271e1d60e71c86f",
+    "assets/maps/greece.webp": "8e0405f8b3b6cf1e580713a6cf0756ed8cd2dc6fbd6c822909f229292945f3ba",
+    "assets/maps/italy.webp": "a90dba031a28321d2568b74df3ef22b8879d4e2b58178ef3e0507cfb71ff06e0",
+    "assets/sprites/koi.webp": "8ffdd3c2d26eb6cd857cd48802aaea421cb9006578b86acbe53f71f0b81c11b6"
+  }
+}
