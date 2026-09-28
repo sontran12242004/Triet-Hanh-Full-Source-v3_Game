@@ -1,97 +1,121 @@
-# Triết Hành — PostgreSQL
+# Triết Hành — Hành Trình Qua Sáu Miền Tri Thức
 
-Bản source độc lập: 6 map, 18 NPC, 90 câu hỏi, nhân vật nam/nữ áo cam, tự lưu sau mỗi NPC và bảng xếp hạng dùng PostgreSQL. Không sử dụng SQLite.
+> **Trò chơi nhập vai 2D giáo dục triết học** kết hợp giữa khám phá không gian văn hóa lịch sử và chinh phục 90 thử thách tư duy về **Chủ nghĩa duy vật lịch sử** (Triết học Mác – Lênin).
 
-## Thiết lập trên Windows / pgAdmin
+---
 
-Yêu cầu: Node.js 22.13 trở lên và PostgreSQL đang chạy.
+## 🌟 Tổng Quan Về Game
 
-1. Giải nén gói này, mở terminal trong thư mục có `package.json`.
-2. Trong pgAdmin, kết nối server PostgreSQL của bạn. Bấm phải Databases → Create → Database, đặt tên `triet_hanh`. Hoặc mở Query Tool của database `postgres` rồi chạy file `db/create_database.sql` (chạy riêng, không gộp vào transaction tạo bảng).
-3. Sao chép `.env.example` thành `.env`. Trong PowerShell:
+**Triết Hành** đưa người chơi vào vai một nhà khai phóng trẻ tuổi trong trang phục sinh viên năng động, bước qua cánh cổng thời gian để dấn thân vào hành trình vĩ đại qua **6 nền văn minh tri thức nhân loại**. Trên mỗi vùng đất, người chơi sẽ hội ngộ cùng **18 nhà tư tưởng kiệt xuất**, giải mã các quy luật vận động của lịch sử xã hội, từ cội nguồn sản xuất vật chất đến thời đại công nghệ số và trí tuệ nhân tạo.
 
-```powershell
-Copy-Item .env.example .env
-```
+* **Thể loại**: Nhập vai 2D Top-down, Giáo dục / Giải đố tri thức.
+* **Thời lượng**: 90 câu hỏi qua 6 thế giới (tương đương 30 - 60 phút trải nghiệm).
+* **Nền tảng**: Trình duyệt Web (PC, Laptop, Tablet, Mobile) — không cần cài đặt.
 
-4. Sửa `.env` bằng thông tin thật trên máy bạn:
+---
 
-```dotenv
-PGHOST=localhost
-PGPORT=5432
-PGDATABASE=triet_hanh
-PGUSER=postgres
-PGPASSWORD="mat_khau_PostgreSQL_cua_ban"
-PGSSL=false
-PORT=3000
-HOST=127.0.0.1
-```
+## 🗺️ Hành Trình 6 Miền Tri Thức
 
-5. Chạy:
+Trò chơi được thiết kế bám sát chương trình **Triết học Mác – Lênin (Chương III: Chủ nghĩa duy vật lịch sử)**:
 
-```sh
-npm install
-npm run db:init
-npm start
-```
+| # | Vùng đất | Bối cảnh văn hóa | Chủ đề lý luận chính | Triết gia dẫn chuyện & Khu vực |
+|:-:|---|---|---|---|
+| **1** | **Trung Quốc** | *Miền khởi nguyên* (Sơn thủy, cầu gỗ, suối cá Koi) | **3.1.1 — Sản xuất vật chất**<br>Vai trò nền tảng của sản xuất đối với sự tồn tại và phát triển xã hội. | • **Khổng Tử** (*Học đường Lễ nghĩa*)<br>• **Lão Tử** (*Đạo Quán Thanh Tịnh*)<br>• **Mặc Tử** (*Phường Cơ Giới*) |
+| **2** | **Hy Lạp** | *Bến bờ biện chứng* (Biển Địa Trung Hải, đền cẩm thạch) | **3.1.2 — Quy luật LLSX & QHSX**<br>Mối quan hệ biện chứng giữa lực lượng sản xuất và quan hệ sản xuất. | • **Heraclitus** (*Bờ biển Dòng chảy*)<br>• **Socrates** (*Quảng trường Đối thoại*)<br>• **Aristotle** (*Khu vườn Bách khoa*) |
+| **3** | **Pháp** | *Ánh sáng khai minh* (Thư viện cổ, quảng trường lá phong) | **3.1.3 — Cơ sở hạ tầng & Kiến trúc thượng tầng**<br>Mối liên hệ kinh tế với chính trị, tư tưởng và pháp quyền. | • **Montesquieu** (*Hành lang Pháp quyền*)<br>• **Voltaire** (*Thư phòng Khai minh*)<br>• **Rousseau** (*Khu rừng Khế ước*) |
+| **4** | **Đức** | *Đỉnh cao triết học cổ điển* (Học viện, tháp đồng hồ) | **3.1.4 — Hình thái kinh tế – xã hội**<br>Lịch sử tự nhiên và các giai đoạn phát triển của xã hội loài người. | • **Immanuel Kant** (*Đài thiên văn Lý tính*)<br>• **G.W.F. Hegel** (*Cung điện Biện chứng*)<br>• **Ludwig Feuerbach** (*Vườn Nhân bản*) |
+| **5** | **Anh** | *Công xưởng công nghiệp* (Nhà máy hơi nước, kỷ nguyên số) | **Vận dụng hiện đại (LLSX mới)**<br>Công cụ AI, kỹ năng số, phân công lao động và chuyển đổi chuỗi giá trị. | • **Francis Bacon** (*Xưởng thực nghiệm Tri thức*)<br>• **Thomas Hobbes** (*Đại sảnh Tổ chức*)<br>• **John Locke** (*Thư viện Quyền & Lao động*) |
+| **6** | **Ý** | *Ngọn hải đăng phục hưng* (Venice thơ mộng, đài quan sát) | **Tổng kết duy vật lịch sử**<br>Quy luật vận động lịch sử, vai trò của quần chúng và tương lai nhân loại. | • **Niccolò Machiavelli** (*Dinh thự Chính trị*)<br>• **Giordano Bruno** (*Đài quan sát Chân trời*)<br>• **Giambattista Vico** (*Viện lưu trữ Lịch sử*) |
 
-6. Mở **http://localhost:3000**. Trả lời đúng đủ 5 câu của một NPC, game tự lưu một lần. Bấm Xếp hạng để xem.
+---
 
-`npm run db:init` tạo bảng và index bằng `db/schema.sql`. Nếu bạn muốn dùng pgAdmin: chọn database `triet_hanh`, mở Query Tool và chạy `db/schema.sql`, sau đó bỏ qua lệnh db:init. Không import file `.sqlite` của gói cũ vào PostgreSQL.
+## 🎮 Cơ Chế Trò Chơi (Gameplay Mechanics)
 
-## Dùng PostgreSQL trên server khác
+### 1. Tương Tác & Đối Thoại
+* Tiến lại gần triết gia, biểu tượng chấm than `!` sẽ xuất hiện trên đầu nhân vật.
+* Nhấn phím **E** (hoặc chạm nút **Đối thoại** trên điện thoại) để bắt đầu đàm đạo tri thức.
+* Mỗi NPC thử thách bạn qua **5 câu hỏi trắc nghiệm tư duy**.
 
-Điền PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD theo server đó. Hoặc đặt DATABASE_URL thay cho 5 biến trên. Nếu dùng URL và mật khẩu có ký tự đặc biệt, phải mã hóa phần mật khẩu theo URL; dùng các biến PG riêng thường đơn giản hơn.
+### 2. Sinh Lực & Thử Thách
+* Người chơi sở hữu **3 lượt sai (♥ ♥ ♥)** tại mỗi vùng đất.
+* Nếu trả lời sai quá 3 lần ở một bản đồ, năng lượng tri thức sẽ cạn kiệt và bạn phải **khởi động lại từ Map 1**.
 
-Nếu nhà cung cấp yêu cầu TLS, dùng PGSSL=true và PGSSL_CA_FILE nếu họ cung cấp chứng chỉ CA. Không kết hợp tùy chọn sslmode trong DATABASE_URL với PGSSL tùy chỉnh; dùng một cách cấu hình. File .env không được đưa lên Git.
+### 3. Hệ Thống Tính Điểm
+$$\text{Điểm số} = \max(0,\, \text{Số câu đúng} \times 100 - \text{Số lần sai} \times 25)$$
+* Điểm tối đa tuyệt đối: **9.000 điểm** (90 câu đúng hoàn hảo).
+* Xếp hạng ưu tiên theo: **Điểm số cao hơn** $\rightarrow$ **Thời gian hoàn thành ngắn hơn**.
 
-## Database
+### 4. Hệ Thống Cổng Dịch Chuyển Kép
+* **Cổng Tiến (Màu Vàng Quang Học)**: Tọa lạc ở chính giữa phía dưới map. Chỉ kích hoạt sau khi đã thu thập đủ 3 Ấn tri thức (hoàn thành 15 câu của map đó) để tiến sang quốc gia kế tiếp.
+* **Cổng Lùi (Màu Lam Ngọc — Back Portal)**: Tọa lạc ở góc dưới bên trái (`x: 28%`). Cho phép người chơi tự do quay lại vùng đất trước đó để thăm lại các triết gia, ôn tập bài học mà không làm mất tiến độ hiện tại.
 
-Bảng `scores`: một dòng cho mỗi lượt chơi, được cập nhật sau mỗi NPC.
+### 5. Sổ Tri Thức (Journal)
+* Nhấn phím **J** bất kỳ lúc nào để mở **Sổ tri thức**.
+* Mỗi khi vượt qua thử thách của một triết gia, bạn sẽ nhận được một **Ấn tri thức** đúc kết bài học cốt lõi tương ứng, ghi nhận vào hành trang của bạn.
 
-| Cột | Ý nghĩa |
-|---|---|
-| id | ID lượt chơi duy nhất |
-| name | Tên nhân vật, tối đa 24 ký tự |
-| gender | male / female |
-| mode | full |
-| rules_version | 2 cho bản 90 câu |
-| score | max(0, số câu đúng × 100 − số lần sai × 25) |
-| duration | Thời gian tính bằng giây |
-| mistakes | Tổng số lần sai tại mốc lưu |
-| answered | Số câu đúng, tối đa 90 |
-| npc_count | Số NPC hoàn thành, tối đa 18 |
-| answers_json | JSONB chứa mã câu đúng, ví dụ ["0:0:0","0:0:1"] |
-| created_at | Thời điểm ghi danh đầu tiên, Unix milliseconds |
-| updated_at | Thời điểm cập nhật gần nhất, timestamptz |
+---
 
-`db/leaderboard.sql` xem Top 50 theo điểm giảm dần, thời gian tăng dần. Gửi lại một mốc lưu không tạo dòng trùng. Yêu cầu đến chậm không ghi đè tiến độ mới hơn.
+## 🎨 Điểm Nhấn Nghệ Thuật & Đồ Họa
 
-Nội dung map, NPC và câu hỏi vẫn ở `dist/data.js`. Database lưu tiến độ và thành tích người chơi. Trạng thái tiếp tục chơi, vị trí và lượt sai theo map vẫn được giữ trong trình duyệt; chưa có đăng nhập hoặc khôi phục phiên chơi từ database trên máy khác.
+* **Đồ họa sống động (Canvas 2D + WebGL Shaders)**:
+  - Hiệu ứng mặt nước chân thực, sóng biển dập dềnh tại bến cảng Hy Lạp.
+  - Đàn cá Koi bơi lội uốn lượn dưới suối trong cảnh quan Trung Hoa.
+  - Tán lá cây lay động theo gió, lá vàng rơi tại Paris, cánh hoa bay lượn tại vương quốc Anh.
+  - Ánh đèn vàng lung linh trong sương đêm và khói lam chiều tại Đức.
+* **Tùy chỉnh nhân vật**: Tùy chọn nhân vật Nam hoặc Nữ với trang phục áo polo cam hiện đại, hoạt ảnh bước đi 4 khung hình mượt mà.
+* **Âm thanh tổng hợp (Web Audio API)**: Hiệu ứng âm thanh khi đúng, sai, thăng cấp và chiến thắng được tổng hợp trực tiếp bằng dao động sóng âm, tải trang tức thì mà không cần load file âm thanh nặng.
 
-## Cấu trúc source
+---
 
-- `dist/`: toàn bộ giao diện, game, model và hình ảnh.
-- `server/index.mjs`: HTTP server phục vụ web và API.
-- `server/db.mjs`: kết nối PostgreSQL bằng node-postgres Pool.
-- `server/api.mjs`: GET/POST `/api/leaderboard`, kiểm tra dữ liệu và lưu bằng truy vấn tham số $1, $2...
-- `scripts/init-db.mjs`: khởi tạo schema.
-- `db/`: file SQL PostgreSQL.
-- `.env.example`: mẫu cấu hình kết nối.
-- `tests/postgres.test.mjs`: kiểm tra schema PostgreSQL và API bằng PGlite (PostgreSQL chạy nhúng), không kết nối database thật của bạn. Chạy `npm test`.
+## 🕹️ Hướng Dẫn Điều Khiển
 
-## Lỗi thường gặp
+| Thao tác | Bàn phím máy tính | Màn hình cảm ứng (Mobile/Tablet) |
+|---|---|---|
+| **Di chuyển** | `W`, `A`, `S`, `D` hoặc các phím mũi tên $\uparrow \leftarrow \downarrow \rightarrow$ | D-pad ảo 4 hướng ở góc dưới màn hình |
+| **Tìm đường tự động** | Chuột trái (Click vào điểm trên mặt đất) | Chạm trực tiếp vào vị trí cần đến trên bản đồ |
+| **Đối thoại** | Nhấn phím `E` khi ở gần NPC | Chạm nút `[E] Đối thoại` nổi lên trên màn hình |
+| **Chọn đáp án** | Phím số `1`, `2`, `3` hoặc click chuột | Chạm trực tiếp vào đáp án A, B hoặc C |
+| **Mở Sổ tri thức** | Nhấn phím `J` | Bấm nút `Sổ tri thức [J]` trên thanh điều hướng |
+| **Bảng xếp hạng** | Click nút `🏆 Xếp hạng` | Bấm nút `🏆 Xếp hạng` trên đầu trang |
 
-- `28P01`: kiểm tra user/password trong .env.
-- `3D000`: tạo database triet_hanh hoặc sửa PGDATABASE.
-- `42P01`: chạy npm run db:init để tạo bảng.
-- `ECONNREFUSED`: bật dịch vụ PostgreSQL và kiểm tra host/port.
-- Đổi PORT nếu cổng 3000 đã được dùng.
+---
 
-## Phạm vi bàn giao
+## 💻 Kiến Trúc Kỹ Thuật
 
-Đây là bộ source đã chuẩn bị cho PostgreSQL của bạn; chưa có thông tin kết nối của bạn nên chưa kết nối tới database đó. Website công khai đã tạo trước đây vẫn dùng database riêng của website, chưa tự chuyển sang PostgreSQL này. Dữ liệu website cũ không có trong gói.
+* **Frontend**: HTML5, Vanilla JavaScript hiện đại (ES Modules), Canvas 2D API kết hợp WebGL GLSL Shaders, tối ưu hóa 60 FPS, Responsive tương thích mọi kích thước màn hình.
+* **Backend API**: Node.js RESTful API, Serverless Architecture sẵn sàng deploy trên Vercel.
+* **Cơ sở dữ liệu**: PostgreSQL (Railway Cloud Database), lưu trữ checkpoint an toàn với JSONB sau mỗi NPC hoàn thành.
+* **Bảo toàn dữ liệu**: Kết hợp `localStorage` đồng bộ tức thì, chống mất dữ liệu khi mất kết nối mạng (tự động retry upload khi online).
 
-Bảng xếp hạng phục vụ game học tập, chưa xác minh toàn bộ đáp án từ server để chống sửa điểm từ phía client.
+---
 
-Tài liệu driver chính thức: https://node-postgres.com/features/pooling và https://node-postgres.com/features/ssl.
+## 🚀 Cài Đặt & Chạy Cục Bộ (Local Development)
+
+### Yêu cầu hệ thống
+* **Node.js**: Phiên bản 22.13 trở lên.
+* **PostgreSQL**: (Tùy chọn nếu muốn chạy backend lưu điểm cục bộ).
+
+### Các bước khởi chạy
+1. **Cài đặt thư viện**:
+   ```bash
+   npm install
+   ```
+2. **Khởi chạy máy chủ nội bộ**:
+   ```bash
+   npm start
+   ```
+   Hoặc chạy demo giao diện nhanh:
+   ```bash
+   node dist/triet-hanh-back-portal/serve.mjs
+   ```
+3. **Mở trình duyệt**: Truy cập `http://localhost:3000` (hoặc `http://localhost:8080`) để bắt đầu hành trình.
+
+4. **Chạy kiểm thử tự động**:
+   ```bash
+   npm test
+   ```
+   *(Kiểm thử tự động toàn diện API PostgreSQL, Logic tính điểm và Cổng dịch chuyển BackPortal)*.
+
+---
+
+*Chúc bạn có những trải nghiệm đầy hứng khởi và gặt hái nhiều tri thức quý giá trên hành trình **Triết Hành**!*

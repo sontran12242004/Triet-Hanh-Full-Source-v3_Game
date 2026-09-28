@@ -1,0 +1,22 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Demo cổng quay lại map</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0c141b;color:#eff6f5;font:16px system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:18px}header{display:flex;align-items:center;gap:16px;flex-wrap:wrap}h1{font-size:22px;margin-right:auto}select{font:inherit;padding:8px;border-radius:8px;background:#1d3540;color:inherit}canvas{width:100%;height:auto;background:#152b33;border:1px solid #44636b;border-radius:12px;touch-action:none}p{line-height:1.6;color:#bacfd3}#status{color:#a9edf0}</style>
+<main><header><h1>Cổng quay lại map</h1><label>Map <select id="map"></select></label></header><p>WASD / phím mũi tên hoặc bấm vào sân để di chuyển chấm tròn. Đi vào cổng xanh ở phía dưới bên trái. Đây là sân test, không phải background game.</p><canvas id="game" width="1440" height="900" tabindex="0" aria-label="Sân thử cổng quay lại map"></canvas><p id="status" role="status">Map Hy Lạp · Chưa cần hoàn thành NPC để quay lại Trung Quốc.</p></main>
+<script type="module">
+import {BackPortal} from './back-portal.js';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),menu=document.querySelector('#map'),status=document.querySelector('#status');
+const names=['Trung Quốc','Hy Lạp','Pháp','Đức','Anh','Ý'];const portal=new BackPortal({mapNames:names});let world=1,player=portal.spawnPoint,target=null,last=0,time=0;const keys=new Set();
+names.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;menu.append(o)});menu.value=world;
+function changeMap(index){if(index<0||index>=names.length)return false;world=index;player=portal.spawnPoint;target=null;keys.clear();menu.value=index;status.textContent='Đang ở '+names[index]+(index===0?' · Map đầu không có cổng quay lại.':' · Đi vào cổng xanh để quay lại '+names[index-1]+'.');return true;}
+menu.onchange=()=>changeMap(Number(menu.value));
+canvas.onpointerdown=e=>{const r=canvas.getBoundingClientRect();target={x:(e.clientX-r.left)*1440/r.width,y:(e.clientY-r.top)*900/r.height};canvas.focus();};
+canvas.onkeydown=e=>{const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){e.preventDefault();keys.add(k);target=null;}};
+window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();target=null;});
+function loop(ms){const dt=last?Math.min((ms-last)/1000,.04):0;last=ms;time+=dt;let dx=0,dy=0;
+ if(keys.has('w')||keys.has('arrowup'))dy--;if(keys.has('s')||keys.has('arrowdown'))dy++;if(keys.has('a')||keys.has('arrowleft'))dx--;if(keys.has('d')||keys.has('arrowright'))dx++;
+ if(target){dx=target.x-player.x;dy=target.y-player.y;if(Math.hypot(dx,dy)<3){target=null;dx=dy=0;}}
+ const length=Math.hypot(dx,dy);if(length){const step=Math.min(285*dt,target?length:Infinity);player.x=Math.max(30,Math.min(1410,player.x+dx/length*step));player.y=Math.max(30,Math.min(870,player.y+dy/length*step));}
+ portal.update({player,mapIndex:world,dt,changeMap});ctx.clearRect(0,0,1440,900);ctx.strokeStyle='#ffffff08';ctx.lineWidth=1;
+ for(let x=0;x<1440;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,900);ctx.stroke();}for(let y=0;y<900;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1440,y);ctx.stroke();}
+ ctx.fillStyle='#c4dfe3';ctx.font='600 30px system-ui';ctx.textAlign='center';ctx.fillText(names[world],720,80);portal.draw(ctx,{mapIndex:world,time});ctx.fillStyle='#ffd28a';ctx.beginPath();ctx.arc(player.x,player.y,12,0,Math.PI*2);ctx.fill();requestAnimationFrame(loop);
+}requestAnimationFrame(loop);
+</script></html>
