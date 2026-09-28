@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/**/*.mjs": {
+      "runtime": "@vercel/node@4"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/leaderboard.mjs" }
+  ]
+}
