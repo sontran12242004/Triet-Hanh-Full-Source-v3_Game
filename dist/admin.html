@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Triết Hành</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23152129'/%3E%3Cpath d='M9 10h9l2 3 2-3h9v21h-9l-2 2-2-2H9z' fill='none' stroke='%23eaca84' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a1117; --surface: #121d26; --surface2: #1a2a36;
+    --border: #243442; --text: #e8ebe6; --muted: #8a9baa;
+    --accent: #f0c960; --accent2: #e8a835; --danger: #e85555;
+    --danger-hover: #ff6b6b; --success: #4ecb71; --radius: 12px;
+  }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  /* Login Screen */
+  .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; max-width: 400px; width: 100%; text-align: center; }
+  .login-card h1 { font-size: 24px; margin-bottom: 8px; color: var(--accent); }
+  .login-card p { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .login-card input { width: 100%; padding: 14px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px; outline: none; transition: border-color .2s; }
+  .login-card input:focus { border-color: var(--accent); }
+  .login-card button { width: 100%; margin-top: 16px; padding: 14px; border: none; border-radius: var(--radius); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #1a1a1a; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .login-card button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,201,96,.25); }
+  .login-error { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+  /* Dashboard */
+  .dashboard { display: none; }
+  .dashboard.active { display: block; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+  .topbar h1 { font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .topbar h1 span { color: var(--accent); }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  
+  .container { max-width: 1200px; margin: 0 auto; padding: 28px 32px; }
+
+  /* Stats Cards */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; transition: border-color .2s; }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
+  .stat-card .value { font-size: 32px; font-weight: 700; color: var(--accent); margin-top: 6px; }
+  .stat-card .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* Table */
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+  .table-header h2 { font-size: 18px; }
+  .table-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .search-box { padding: 10px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; min-width: 220px; transition: border-color .2s; }
+  .search-box:focus { border-color: var(--accent); }
+
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th { background: var(--surface2); padding: 14px 16px; text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; position: sticky; top: 0; }
+  tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
+  tbody tr:hover { background: rgba(240,201,96,.04); }
+  tbody td { padding: 12px 16px; white-space: nowrap; }
+  .gender-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .gender-male { background: rgba(66,133,244,.15); color: #7aafff; }
+  .gender-female { background: rgba(233,100,160,.15); color: #f0a0c8; }
+  .npc-progress { display: flex; align-items: center; gap: 8px; }
+  .npc-bar { width: 60px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .npc-bar-fill { height: 100%; border-radius: 3px; background: var(--success); transition: width .3s; }
+
+  /* Buttons */
+  .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--accent); color: #1a1a1a; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Empty & Status */
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .status-msg { text-align: center; padding: 16px; color: var(--muted); font-size: 14px; }
+
+  /* Confirm Dialog */
+  dialog { border: none; border-radius: 16px; background: var(--surface); color: var(--text); padding: 32px; max-width: 420px; width: 90%; }
+  dialog::backdrop { background: rgba(0,0,0,.6); backdrop-filter: blur(4px); }
+  dialog h3 { font-size: 18px; margin-bottom: 8px; }
+  dialog p { color: var(--muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+  dialog .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 22px; font-size: 14px; transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 100; max-width: 360px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    .topbar { padding: 12px 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .search-box { min-width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login" class="login-screen">
+  <div class="login-card">
+    <h1>🔐 Admin Panel</h1>
+    <p>Triết Hành — Quản lý bảng xếp hạng</p>
+    <input type="password" id="admin-key" placeholder="Nhập Admin Key…" autocomplete="off">
+    <button onclick="login()">Đăng nhập</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+  <div class="topbar">
+    <h1>⚙️ <span>Admin</span> · Triết Hành</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="refresh()">🔄 Tải lại</button>
+      <button class="btn btn-logout" onclick="logout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="label">Tổng người chơi</div><div class="value" id="s-total">—</div></div>
+      <div class="stat-card"><div class="label">Hoàn thành 18 NPC</div><div class="value" id="s-completed">—</div></div>
+      <div class="stat-card"><div class="label">Điểm cao nhất</div><div class="value" id="s-max">—</div></div>
+      <div class="stat-card"><div class="label">Điểm trung bình</div><div class="value" id="s-avg">—</div></div>
+      <div class="stat-card"><div class="label">Thời gian TB</div><div class="value" id="s-duration">—</div><div class="sub">phút</div></div>
+    </div>
+
+    <!-- Player Table -->
+    <div class="table-header">
+      <h2>📋 Danh sách người chơi</h2>
+      <div class="table-actions">
+        <input type="text" class="search-box" id="search" placeholder="🔍 Tìm theo tên…" oninput="filterTable()">
+        <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ Xóa tất cả</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên</th>
+            <th>Giới tính</th>
+            <th>Điểm</th>
+            <th>NPC</th>
+            <th>Câu trả lời</th>
+            <th>Sai</th>
+            <th>Thời gian</th>
+            <th>Cập nhật</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="player-body"></tbody>
+      </table>
+    </div>
+    <div id="table-status" class="status-msg"></div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<dialog id="confirm-dialog">
+  <h3 id="confirm-title">Xác nhận</h3>
+  <p id="confirm-msg"></p>
+  <div class="dialog-actions">
+    <button class="btn btn-ghost" onclick="document.getElementById('confirm-dialog').close()">Hủy</button>
+    <button class="btn btn-danger" id="confirm-btn">Xóa</button>
+  </div>
+</dialog>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let adminKey = sessionStorage.getItem('adminKey') || '';
+let allPlayers = [];
+let toastTimer = null;
+
+// ── Auth ──
+function login() {
+  adminKey = $('admin-key').value.trim();
+  if (!adminKey) { $('login-error').textContent = 'Vui lòng nhập Admin Key.'; return; }
+  $('login-error').textContent = 'Đang xác thực…';
+  apiFetch('GET', 'stats').then(data => {
+    if (data.error) { $('login-error').textContent = 'Admin Key không đúng.'; adminKey = ''; return; }
+    sessionStorage.setItem('adminKey', adminKey);
+    showDashboard();
+  }).catch(() => { $('login-error').textContent = 'Không kết nối được server.'; });
+}
+
+function logout() { adminKey = ''; sessionStorage.removeItem('adminKey'); location.reload(); }
+
+function showDashboard() {
+  $('login').style.display = 'none';
+  $('dashboard').classList.add('active');
+  refresh();
+}
+
+// ── API ──
+async function apiFetch(method, action, params = {}) {
+  const qs = new URLSearchParams({ action, key: adminKey, ...params });
+  const res = await fetch('/api/admin?' + qs, { method, headers: { 'X-Admin-Key': adminKey } });
+  return res.json();
+}
+
+// ── Data ──
+async function refresh() {
+  loadStats();
+  loadPlayers();
+}
+
+async function loadStats() {
+  try {
+    const s = await apiFetch('GET', 'stats');
+    $('s-total').textContent = s.total_players || 0;
+    $('s-completed').textContent = s.completed || 0;
+    $('s-max').textContent = s.max_score || 0;
+    $('s-avg').textContent = Math.round(s.avg_score || 0);
+    $('s-duration').textContent = Math.round((s.avg_duration || 0) / 60);
+  } catch { }
+}
+
+async function loadPlayers() {
+  $('table-status').textContent = 'Đang tải…';
+  try {
+    const data = await apiFetch('GET', 'list');
+    allPlayers = data.players || [];
+    $('table-status').textContent = allPlayers.length ? `${data.total} người chơi` : '';
+    renderTable(allPlayers);
+  } catch {
+    $('table-status').textContent = 'Không tải được dữ liệu.';
+  }
+}
+
+function timeLabel(s) {
+  s = Math.max(0, Math.round(s));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function formatDate(val) {
+  if (!val) return '—';
+  const d = typeof val === 'number' ? new Date(val) : new Date(val);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderTable(players) {
+  const body = $('player-body');
+  if (!players.length) {
+    body.innerHTML = '<tr><td colspan="10"><div class="empty"><div class="icon">📭</div>Chưa có người chơi nào.</div></td></tr>';
+    return;
+  }
+  body.innerHTML = players.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${esc(p.name)}</strong></td>
+      <td><span class="gender-badge gender-${p.gender}">${p.gender === 'male' ? '👦 Nam' : '👧 Nữ'}</span></td>
+      <td><strong>${p.score}</strong></td>
+      <td>
+        <div class="npc-progress">
+          <div class="npc-bar"><div class="npc-bar-fill" style="width:${Math.round(p.npc_count / 18 * 100)}%"></div></div>
+          ${p.npc_count}/18
+        </div>
+      </td>
+      <td>${p.answered}/90</td>
+      <td>${p.mistakes}</td>
+      <td>${timeLabel(p.duration)}</td>
+      <td>${formatDate(p.updated_at || p.created_at)}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('${esc(p.id)}','${esc(p.name)}')">Xóa</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTable() {
+  const q = $('search').value.trim().toLowerCase();
+  const filtered = q ? allPlayers.filter(p => p.name.toLowerCase().includes(q)) : allPlayers;
+  renderTable(filtered);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ── Delete Actions ──
+function confirmDelete(id, name) {
+  $('confirm-title').textContent = 'Xóa người chơi';
+  $('confirm-msg').textContent = `Bạn có chắc muốn xóa "${name}" khỏi bảng xếp hạng? Hành động này không thể hoàn tác.`;
+  $('confirm-btn').textContent = 'Xóa người chơi';
+  $('confirm-btn').onclick = () => doDelete(id, name);
+  $('confirm-dialog').showModal();
+}
+
+function confirmClearAll() {
+  $('confirm-title').textContent = '⚠️ Xóa tất cả';
+  $('confirm-msg').textContent = `Bạn có chắc muốn xóa TOÀN BỘ ${allPlayers.length} người chơi? Hành động này không thể hoàn tác!`;
+  $('confirm-btn').textContent = 'Xóa tất cả';
+  $('confirm-btn').onclick = doClearAll;
+  $('confirm-dialog').showModal();
+}
+
+async function doDelete(id, name) {
+  $('confirm-dialog').close();
+  try {
+    const res = await apiFetch('DELETE', 'delete', { id });
+    if (res.deleted) { toast('Đã xóa ' + name, 'success'); refresh(); }
+    else toast('Không tìm thấy người chơi.', 'error');
+  } catch { toast('Lỗi khi xóa.', 'error'); }
+}
+
+async function doClearAll() {
+  $('confirm-dialog').close();
+  try {
+    const res = await apiFetch('DELETE', 'clear-all');
+    toast(`Đã xóa ${res.deleted} người chơi.`, 'success');
+    refresh();
+  } catch { toast('Lỗi khi xóa.', 'error'); }
+}
+
+// ── Toast ──
+function toast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Init ──
+$('admin-key').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+if (adminKey) { apiFetch('GET', 'stats').then(d => { if (!d.error) showDashboard(); else { adminKey = ''; sessionStorage.removeItem('adminKey'); } }).catch(() => {}); }
+</script>
+</body>
+</html>

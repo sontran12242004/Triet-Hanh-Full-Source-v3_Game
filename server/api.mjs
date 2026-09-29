@@ -10,6 +10,19 @@ export async function api(request,env){
   const result=await db.query('SELECT 1 FROM scores WHERE LOWER(TRIM(name))=LOWER($1) LIMIT 1',[name]);
   return json({exists:result.rows.length>0});
  }
+ if(url.pathname==='/api/admin'){
+  const adminKey=request.headers.get('x-admin-key')||url.searchParams.get('key')||'';
+  if(adminKey!==(env.ADMIN_KEY||process.env.ADMIN_KEY||''))return json({error:'Unauthorized'},401);
+  const db=database(env),action=url.searchParams.get('action')||'list';
+  try{
+   if(request.method==='GET'&&action==='list'){const r=await db.query('SELECT id,name,gender,mode,score,duration,mistakes,answered,npc_count,rules_version,created_at,updated_at FROM scores ORDER BY updated_at DESC');return json({players:r.rows,total:r.rows.length});}
+   if(request.method==='GET'&&action==='stats'){const r=await db.query("SELECT COUNT(*) AS total_players,COUNT(*) FILTER (WHERE npc_count=18) AS completed,COALESCE(AVG(score),0) AS avg_score,COALESCE(MAX(score),0) AS max_score,COALESCE(AVG(duration),0) AS avg_duration FROM scores WHERE rules_version=2");return json(r.rows[0]);}
+   if(request.method==='DELETE'&&action==='delete'){const id=url.searchParams.get('id');if(!id)return json({error:'Missing id'},400);const r=await db.query('DELETE FROM scores WHERE id=$1',[id]);return json({deleted:r.rowCount>0,id});}
+   if(request.method==='DELETE'&&action==='delete-by-name'){const name=(url.searchParams.get('name')||'').trim();if(!name)return json({error:'Missing name'},400);const r=await db.query('DELETE FROM scores WHERE LOWER(TRIM(name))=LOWER($1)',[name]);return json({deleted:r.rowCount,name});}
+   if(request.method==='DELETE'&&action==='clear-all'){const r=await db.query('DELETE FROM scores');return json({deleted:r.rowCount});}
+   return json({error:'Unknown action'},400);
+  }catch(e){console.error('Admin API error',e.code||'UNKNOWN');return json({error:'Server error'},503);}
+ }
  if(url.pathname!=='/api/leaderboard')return json({error:'Not found'},404);
  try{
   const db=database(env);

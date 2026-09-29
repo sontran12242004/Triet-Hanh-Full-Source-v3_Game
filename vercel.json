@@ -4,6 +4,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/check-name", "destination": "/api/check-name.mjs" },
+    { "source": "/api/admin", "destination": "/api/admin.mjs" },
     { "source": "/api/(.*)", "destination": "/api/leaderboard.mjs" }
   ]
 }
