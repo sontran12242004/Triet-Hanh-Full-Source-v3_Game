@@ -2,6 +2,14 @@ const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:
 const database=env=>{if(!env.DB)throw new Error('Database unavailable');return env.DB;};
 export async function api(request,env){
  const url=new URL(request.url);
+ if(url.pathname==='/api/check-name'){
+  if(request.method!=='GET')return json({error:'Method not allowed'},405);
+  const name=(url.searchParams.get('name')||'').trim();
+  if(!name||name.length>24)return json({error:'Invalid name'},400);
+  const db=database(env);
+  const result=await db.query('SELECT 1 FROM scores WHERE LOWER(TRIM(name))=LOWER($1) LIMIT 1',[name]);
+  return json({exists:result.rows.length>0});
+ }
  if(url.pathname!=='/api/leaderboard')return json({error:'Not found'},404);
  try{
   const db=database(env);
