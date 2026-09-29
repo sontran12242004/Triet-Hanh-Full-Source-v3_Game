@@ -18,4 +18,16 @@ CREATE TABLE IF NOT EXISTS scores (
 );
 CREATE INDEX IF NOT EXISTS scores_ranking
     ON scores (rules_version, mode, score DESC, duration ASC, created_at ASC);
+CREATE INDEX IF NOT EXISTS scores_name_lower
+    ON scores (LOWER(TRIM(name)));
+
+-- Bang luu toan bo tien do game cua nguoi choi (thay the localStorage)
+CREATE TABLE IF NOT EXISTS players (
+    name_lower VARCHAR(24) PRIMARY KEY,
+    name VARCHAR(24) NOT NULL,
+    gender VARCHAR(6) NOT NULL CHECK (gender IN ('male', 'female')),
+    game_state JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 COMMIT;

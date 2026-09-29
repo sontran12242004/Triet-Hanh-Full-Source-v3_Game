@@ -296,7 +296,7 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 // ── Delete Actions ──
 function confirmDelete(id, name) {
   $('confirm-title').textContent = 'Xóa người chơi';
-  $('confirm-msg').textContent = `Bạn có chắc muốn xóa "${name}" khỏi bảng xếp hạng? Hành động này không thể hoàn tác.`;
+  $('confirm-msg').textContent = `Bạn có chắc muốn xóa "${name}" và toàn bộ dữ liệu khỏi hệ thống? Dữ liệu người chơi trên cả server và trình duyệt sẽ bị xóa hoàn toàn.`;
   $('confirm-btn').textContent = 'Xóa người chơi';
   $('confirm-btn').onclick = () => doDelete(id, name);
   $('confirm-dialog').showModal();
@@ -304,7 +304,7 @@ function confirmDelete(id, name) {
 
 function confirmClearAll() {
   $('confirm-title').textContent = '⚠️ Xóa tất cả';
-  $('confirm-msg').textContent = `Bạn có chắc muốn xóa TOÀN BỘ ${allPlayers.length} người chơi? Hành động này không thể hoàn tác!`;
+  $('confirm-msg').textContent = `Bạn có chắc muốn xóa TOÀN BỘ ${allPlayers.length} người chơi khỏi hệ thống? Hành động này sẽ xóa sạch cả dữ liệu điểm và tiến độ chơi!`;
   $('confirm-btn').textContent = 'Xóa tất cả';
   $('confirm-btn').onclick = doClearAll;
   $('confirm-dialog').showModal();
@@ -313,7 +313,7 @@ function confirmClearAll() {
 async function doDelete(id, name) {
   $('confirm-dialog').close();
   try {
-    const res = await apiFetch('DELETE', 'delete', { id });
+    const res = await apiFetch('DELETE', 'delete', { id, name });
     if (res.deleted) { toast('Đã xóa ' + name, 'success'); refresh(); }
     else toast('Không tìm thấy người chơi.', 'error');
   } catch { toast('Lỗi khi xóa.', 'error'); }

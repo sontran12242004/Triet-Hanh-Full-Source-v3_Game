@@ -33,7 +33,10 @@ export default async function handler(req, res) {
     if (!name || name.length > 24) return json(res, { error: 'Invalid name' }, 400);
 
     const result = await pool.query(
-      'SELECT 1 FROM scores WHERE LOWER(TRIM(name)) = LOWER($1) LIMIT 1',
+      `SELECT 1 FROM scores WHERE LOWER(TRIM(name)) = LOWER($1)
+       UNION
+       SELECT 1 FROM players WHERE name_lower = LOWER(TRIM($1))
+       LIMIT 1`,
       [name]
     );
     return json(res, { exists: result.rows.length > 0 });

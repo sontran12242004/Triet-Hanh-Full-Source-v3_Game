@@ -81,6 +81,12 @@ export default async function handler(req, res) {
       x.score !== Math.max(0, answered * 100 - x.mistakes * 25)
     ) return json(res, { error: 'Invalid result' }, 400);
 
+    // Kiem tra nguoi choi co ton tai trong bang players khong (tranh truong hop admin da xoa ma client van gui len)
+    const pCheck = await pool.query('SELECT 1 FROM players WHERE name_lower = LOWER(TRIM($1))', [x.name]);
+    if (pCheck.rows.length === 0) {
+      return json(res, { error: 'Người chơi không tồn tại hoặc đã bị xóa.', deleted: true }, 403);
+    }
+
     await pool.query(
       `INSERT INTO scores (id,name,gender,mode,score,duration,mistakes,created_at,answered,npc_count,answers_json,rules_version)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
@@ -90,7 +96,7 @@ export default async function handler(req, res) {
          updated_at=CURRENT_TIMESTAMP
        WHERE excluded.npc_count > scores.npc_count AND excluded.rules_version = scores.rules_version`,
       [x.id, x.name.trim(), x.gender, 'full', x.score, x.duration, x.mistakes,
-       Date.now(), answered, npcCount, JSON.stringify(x.answers), rules]
+      Date.now(), answered, npcCount, JSON.stringify(x.answers), rules]
     );
 
     return json(res, { ok: true });

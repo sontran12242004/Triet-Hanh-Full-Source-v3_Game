@@ -5,6 +5,7 @@
   "rewrites": [
     { "source": "/api/check-name", "destination": "/api/check-name.mjs" },
     { "source": "/api/admin", "destination": "/api/admin.mjs" },
+    { "source": "/api/player", "destination": "/api/player.mjs" },
     { "source": "/api/(.*)", "destination": "/api/leaderboard.mjs" }
   ]
 }

@@ -36,12 +36,24 @@ export default async function handler(req, res) {
   try {
     const action = req.query.action || 'list';
 
-    // ── GET ?action=list — Danh sach toan bo nguoi choi ──
+    // ── GET ?action=list — Danh sach toan bo nguoi choi (ket hop players va scores) ──
     if (req.method === 'GET' && action === 'list') {
       const result = await pool.query(
-        `SELECT id, name, gender, mode, score, duration, mistakes, answered, npc_count,
-                rules_version, created_at, updated_at
-         FROM scores
+        `SELECT 
+           COALESCE(s.id, p.name_lower) AS id,
+           COALESCE(p.name, s.name) AS name,
+           COALESCE(p.gender, s.gender) AS gender,
+           COALESCE(s.mode, 'full') AS mode,
+           COALESCE(s.score, 0) AS score,
+           COALESCE(s.duration, 0) AS duration,
+           COALESCE(s.mistakes, 0) AS mistakes,
+           COALESCE(s.answered, jsonb_array_length(COALESCE(p.game_state->'answers', '[]'::jsonb)), 0) AS answered,
+           COALESCE(s.npc_count, 0) AS npc_count,
+           COALESCE(s.rules_version, 2) AS rules_version,
+           COALESCE(s.created_at, (EXTRACT(EPOCH FROM p.created_at)*1000)::bigint) AS created_at,
+           COALESCE(p.updated_at, s.updated_at) AS updated_at
+         FROM players p
+         FULL OUTER JOIN scores s ON p.name_lower = LOWER(TRIM(s.name))
          ORDER BY updated_at DESC`
       );
       return json(res, { players: result.rows, total: result.rows.length });
@@ -51,7 +63,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && action === 'stats') {
       const result = await pool.query(
         `SELECT
-           COUNT(*) AS total_players,
+           (SELECT COUNT(*) FROM players) AS total_players,
            COUNT(*) FILTER (WHERE npc_count = 18) AS completed,
            COALESCE(AVG(score), 0) AS avg_score,
            COALESCE(MAX(score), 0) AS max_score,
@@ -61,26 +73,49 @@ export default async function handler(req, res) {
       return json(res, result.rows[0]);
     }
 
-    // ── DELETE ?action=delete&id=xxx — Xoa 1 nguoi choi theo id ──
+    // ── DELETE ?action=delete&id=xxx — Xoa 1 nguoi choi khoi ca scores va players ──
     if (req.method === 'DELETE' && action === 'delete') {
       const id = req.query.id;
-      if (!id) return json(res, { error: 'Missing id' }, 400);
-      const result = await pool.query('DELETE FROM scores WHERE id = $1', [id]);
-      return json(res, { deleted: result.rowCount > 0, id });
+      let name = (req.query.name || '').trim();
+      if (!id && !name) return json(res, { error: 'Missing id or name' }, 400);
+
+      if (!name && id) {
+        const s = await pool.query('SELECT name FROM scores WHERE id = $1', [id]);
+        if (s.rows.length) name = s.rows[0].name;
+        else {
+          const p = await pool.query('SELECT name FROM players WHERE name_lower = LOWER(TRIM($1))', [id]);
+          if (p.rows.length) name = p.rows[0].name;
+        }
+      }
+
+      let deletedCount = 0;
+      if (id) {
+        const r = await pool.query('DELETE FROM scores WHERE id = $1', [id]);
+        deletedCount += r.rowCount;
+      }
+      if (name) {
+        const r1 = await pool.query('DELETE FROM scores WHERE LOWER(TRIM(name)) = LOWER($1)', [name]);
+        const r2 = await pool.query('DELETE FROM players WHERE name_lower = LOWER(TRIM($1))', [name]);
+        deletedCount += (r1.rowCount + r2.rowCount);
+      }
+
+      return json(res, { deleted: deletedCount > 0, id, name });
     }
 
-    // ── DELETE ?action=delete-by-name&name=xxx — Xoa theo ten ──
+    // ── DELETE ?action=delete-by-name&name=xxx — Xoa theo ten khoi ca scores va players ──
     if (req.method === 'DELETE' && action === 'delete-by-name') {
       const name = (req.query.name || '').trim();
       if (!name) return json(res, { error: 'Missing name' }, 400);
-      const result = await pool.query('DELETE FROM scores WHERE LOWER(TRIM(name)) = LOWER($1)', [name]);
-      return json(res, { deleted: result.rowCount, name });
+      const r1 = await pool.query('DELETE FROM scores WHERE LOWER(TRIM(name)) = LOWER($1)', [name]);
+      const r2 = await pool.query('DELETE FROM players WHERE name_lower = LOWER(TRIM($1))', [name]);
+      return json(res, { deleted: r1.rowCount > 0 || r2.rowCount > 0, name });
     }
 
-    // ── DELETE ?action=clear-all — Xoa toan bo ──
+    // ── DELETE ?action=clear-all — Xoa toan bo du lieu ca scores va players ──
     if (req.method === 'DELETE' && action === 'clear-all') {
-      const result = await pool.query('DELETE FROM scores');
-      return json(res, { deleted: result.rowCount });
+      const r1 = await pool.query('DELETE FROM scores');
+      const r2 = await pool.query('DELETE FROM players');
+      return json(res, { deleted: r1.rowCount + r2.rowCount });
     }
 
     return json(res, { error: 'Unknown action' }, 400);
