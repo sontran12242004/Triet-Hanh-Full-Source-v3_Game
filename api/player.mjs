@@ -22,6 +22,14 @@ const json = (res, data, status = 200) => {
   res.status(status).json(data);
 };
 
+function getClientIP(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const real = req.headers['x-real-ip'];
+  if (real) return real.trim();
+  return req.socket?.remoteAddress || req.connection?.remoteAddress || null;
+}
+
 export default async function handler(req, res) {
   // ── CORS ──
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -74,17 +82,19 @@ export default async function handler(req, res) {
       // Action 1: 'create' — Tạo hoặc khởi tạo lại người chơi khi bấm Bắt đầu
       if (action === 'create') {
         const gameState = body.gameState && typeof body.gameState === 'object' ? body.gameState : {};
+        const clientIP = getClientIP(req);
         const result = await pool.query(
-          `INSERT INTO players (name_lower, name, gender, game_state, updated_at)
-           VALUES (LOWER(TRIM($1)), $1, $2, $3, CURRENT_TIMESTAMP)
+          `INSERT INTO players (name_lower, name, gender, game_state, ip_address, updated_at)
+           VALUES (LOWER(TRIM($1)), $1, $2, $3, $4, CURRENT_TIMESTAMP)
            ON CONFLICT (name_lower)
            DO UPDATE SET
              name = excluded.name,
              gender = excluded.gender,
              game_state = excluded.game_state,
+             ip_address = excluded.ip_address,
              updated_at = CURRENT_TIMESTAMP
            RETURNING name, gender, game_state, updated_at`,
-          [name, gender, JSON.stringify(gameState)]
+          [name, gender, JSON.stringify(gameState), clientIP]
         );
         return json(res, { ok: true, player: result.rows[0] });
       }
@@ -98,11 +108,12 @@ export default async function handler(req, res) {
 
         // CHỈ update nếu người chơi vẫn tồn tại trong DB.
         // Nếu admin đã xóa -> rowCount = 0 -> thông báo để client xóa sạch local.
+        const clientIP = getClientIP(req);
         const result = await pool.query(
           `UPDATE players
-           SET game_state = $1, updated_at = CURRENT_TIMESTAMP
+           SET game_state = $1, ip_address = $3, updated_at = CURRENT_TIMESTAMP
            WHERE name_lower = LOWER(TRIM($2))`,
-          [JSON.stringify(gameState), name]
+          [JSON.stringify(gameState), name, clientIP]
         );
 
         if (result.rowCount === 0) {

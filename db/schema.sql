@@ -27,7 +27,19 @@ CREATE TABLE IF NOT EXISTS players (
     name VARCHAR(24) NOT NULL,
     gender VARCHAR(6) NOT NULL CHECK (gender IN ('male', 'female')),
     game_state JSONB NOT NULL DEFAULT '{}'::jsonb,
+    ip_address VARCHAR(45) DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Thêm cột ip_address nếu bảng đã tồn tại (migration)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'players' AND column_name = 'ip_address'
+  ) THEN
+    ALTER TABLE players ADD COLUMN ip_address VARCHAR(45) DEFAULT NULL;
+  END IF;
+END $$;
 COMMIT;

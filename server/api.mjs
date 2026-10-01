@@ -1,5 +1,6 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
 const database=env=>{if(!env.DB)throw new Error('Database unavailable');return env.DB;};
+function getClientIP(request){const fwd=request.headers.get('x-forwarded-for');if(fwd)return fwd.split(',')[0].trim();const real=request.headers.get('x-real-ip');if(real)return real.trim();return null;}
 export async function api(request,env){
  const url=new URL(request.url);
  if(url.pathname==='/api/check-name'){
@@ -29,13 +30,15 @@ export async function api(request,env){
     if(!name||name.length>24)return json({error:'Invalid name'},400);
     if(action==='create'){
      const gs=body?.gameState&&typeof body.gameState==='object'?body.gameState:{};
-     const r=await db.query(`INSERT INTO players (name_lower,name,gender,game_state,updated_at) VALUES (LOWER(TRIM($1)),$1,$2,$3,CURRENT_TIMESTAMP) ON CONFLICT (name_lower) DO UPDATE SET name=excluded.name,gender=excluded.gender,game_state=excluded.game_state,updated_at=CURRENT_TIMESTAMP RETURNING name,gender,game_state`,[name,gender,JSON.stringify(gs)]);
+     const clientIP=getClientIP(request);
+     const r=await db.query(`INSERT INTO players (name_lower,name,gender,game_state,ip_address,updated_at) VALUES (LOWER(TRIM($1)),$1,$2,$3,$4,CURRENT_TIMESTAMP) ON CONFLICT (name_lower) DO UPDATE SET name=excluded.name,gender=excluded.gender,game_state=excluded.game_state,ip_address=excluded.ip_address,updated_at=CURRENT_TIMESTAMP RETURNING name,gender,game_state`,[name,gender,JSON.stringify(gs),clientIP]);
      return json({ok:true,player:r.rows[0]});
     }
     if(action==='update'){
      const gs=body?.gameState;
      if(!gs||typeof gs!=='object')return json({error:'Invalid gameState'},400);
-     const r=await db.query('UPDATE players SET game_state=$1,updated_at=CURRENT_TIMESTAMP WHERE name_lower=LOWER(TRIM($2))',[JSON.stringify(gs),name]);
+     const clientIP=getClientIP(request);
+     const r=await db.query('UPDATE players SET game_state=$1,ip_address=$3,updated_at=CURRENT_TIMESTAMP WHERE name_lower=LOWER(TRIM($2))',[JSON.stringify(gs),name,clientIP]);
      if(r.rowCount===0)return json({ok:false,deleted:true,message:'Người chơi đã bị xóa bởi quản trị viên.'});
      return json({ok:true});
     }
@@ -50,11 +53,11 @@ export async function api(request,env){
   const db=database(env),action=url.searchParams.get('action')||'list';
   try{
    if(request.method==='GET'&&action==='list'){
-    const r=await db.query(`SELECT COALESCE(s.id,p.name_lower) AS id,COALESCE(p.name,s.name) AS name,COALESCE(p.gender,s.gender) AS gender,COALESCE(s.mode,'full') AS mode,COALESCE(s.score,0) AS score,COALESCE(s.duration,0) AS duration,COALESCE(s.mistakes,0) AS mistakes,COALESCE(s.answered,jsonb_array_length(COALESCE(p.game_state->'answers','[]'::jsonb)),0) AS answered,COALESCE(s.npc_count,0) AS npc_count,COALESCE(s.rules_version,2) AS rules_version,COALESCE(s.created_at,(EXTRACT(EPOCH FROM p.created_at)*1000)::bigint) AS created_at,COALESCE(p.updated_at,s.updated_at) AS updated_at FROM players p FULL OUTER JOIN scores s ON p.name_lower=LOWER(TRIM(s.name)) ORDER BY updated_at DESC`);
+    const r=await db.query(`SELECT COALESCE(s.id,p.name_lower) AS id,COALESCE(p.name,s.name) AS name,COALESCE(p.gender,s.gender) AS gender,COALESCE(s.mode,'full') AS mode,COALESCE(s.score,0) AS score,COALESCE(s.duration,0) AS duration,COALESCE(s.mistakes,0) AS mistakes,COALESCE(s.answered,jsonb_array_length(COALESCE(p.game_state->'answers','[]'::jsonb)),0) AS answered,COALESCE(s.npc_count,0) AS npc_count,COALESCE(s.rules_version,2) AS rules_version,COALESCE(s.created_at,(EXTRACT(EPOCH FROM p.created_at)*1000)::bigint) AS created_at,COALESCE(p.updated_at,s.updated_at) AS updated_at,p.ip_address FROM players p FULL OUTER JOIN scores s ON p.name_lower=LOWER(TRIM(s.name)) ORDER BY updated_at DESC`);
     return json({players:r.rows,total:r.rows.length});
    }
    if(request.method==='GET'&&action==='stats'){
-    const r=await db.query(`SELECT (SELECT COUNT(*) FROM players) AS total_players,COUNT(*) FILTER (WHERE npc_count=18) AS completed,COALESCE(AVG(score),0) AS avg_score,COALESCE(MAX(score),0) AS max_score,COALESCE(AVG(duration),0) AS avg_duration FROM scores WHERE rules_version=2`);
+    const r=await db.query(`SELECT (SELECT COUNT(*) FROM players) AS total_players,(SELECT COUNT(DISTINCT ip_address) FROM players WHERE ip_address IS NOT NULL) AS unique_ips,COUNT(*) FILTER (WHERE npc_count=18) AS completed,COALESCE(AVG(score),0) AS avg_score,COALESCE(MAX(score),0) AS max_score,COALESCE(AVG(duration),0) AS avg_duration FROM scores WHERE rules_version=2`);
     return json(r.rows[0]);
    }
    if(request.method==='DELETE'&&action==='delete'){

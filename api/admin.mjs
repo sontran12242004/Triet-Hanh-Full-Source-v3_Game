@@ -51,7 +51,8 @@ export default async function handler(req, res) {
            COALESCE(s.npc_count, 0) AS npc_count,
            COALESCE(s.rules_version, 2) AS rules_version,
            COALESCE(s.created_at, (EXTRACT(EPOCH FROM p.created_at)*1000)::bigint) AS created_at,
-           COALESCE(p.updated_at, s.updated_at) AS updated_at
+           COALESCE(p.updated_at, s.updated_at) AS updated_at,
+           p.ip_address
          FROM players p
          FULL OUTER JOIN scores s ON p.name_lower = LOWER(TRIM(s.name))
          ORDER BY updated_at DESC`
@@ -64,6 +65,7 @@ export default async function handler(req, res) {
       const result = await pool.query(
         `SELECT
            (SELECT COUNT(*) FROM players) AS total_players,
+           (SELECT COUNT(DISTINCT ip_address) FROM players WHERE ip_address IS NOT NULL) AS unique_ips,
            COUNT(*) FILTER (WHERE npc_count = 18) AS completed,
            COALESCE(AVG(score), 0) AS avg_score,
            COALESCE(MAX(score), 0) AS max_score,

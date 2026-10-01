@@ -96,6 +96,18 @@
   .toast.success { border-color: var(--success); }
   .toast.error { border-color: var(--danger); }
 
+  /* IP Badge */
+  .ip-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-family: 'Courier New', monospace; font-weight: 500; background: rgba(240,201,96,.08); color: var(--muted); cursor: pointer; transition: all .2s; border: 1px solid transparent; }
+  .ip-badge:hover { background: rgba(240,201,96,.15); color: var(--text); border-color: var(--accent); }
+  .ip-badge.duplicate { background: rgba(232,85,85,.12); color: #ff8a8a; border-color: rgba(232,85,85,.3); }
+  .ip-badge.duplicate:hover { background: rgba(232,85,85,.22); color: #ffaaaa; }
+  .ip-badge .copy-icon { opacity: 0; transition: opacity .2s; font-size: 10px; }
+  .ip-badge:hover .copy-icon { opacity: 1; }
+  .ip-no { color: var(--muted); font-size: 12px; font-style: italic; }
+  .ip-stat-card { position: relative; overflow: hidden; }
+  .ip-stat-card::after { content: '🌐'; position: absolute; right: 12px; top: 12px; font-size: 28px; opacity: .15; }
+  .dup-count { color: var(--danger); font-size: 13px; margin-top: 4px; font-weight: 500; }
+
   @media (max-width: 768px) {
     .container { padding: 16px; }
     .topbar { padding: 12px 16px; }
@@ -131,6 +143,7 @@
     <!-- Stats -->
     <div class="stats-row" id="stats-row">
       <div class="stat-card"><div class="label">Tổng người chơi</div><div class="value" id="s-total">—</div></div>
+      <div class="stat-card ip-stat-card"><div class="label">IP duy nhất</div><div class="value" id="s-ips">—</div><div class="sub dup-count" id="s-dup-ips"></div></div>
       <div class="stat-card"><div class="label">Hoàn thành 18 NPC</div><div class="value" id="s-completed">—</div></div>
       <div class="stat-card"><div class="label">Điểm cao nhất</div><div class="value" id="s-max">—</div></div>
       <div class="stat-card"><div class="label">Điểm trung bình</div><div class="value" id="s-avg">—</div></div>
@@ -142,6 +155,8 @@
       <h2>📋 Danh sách người chơi</h2>
       <div class="table-actions">
         <input type="text" class="search-box" id="search" placeholder="🔍 Tìm theo tên…" oninput="filterTable()">
+        <input type="text" class="search-box" id="search-ip" placeholder="🌐 Lọc theo IP…" oninput="filterTable()" style="min-width:160px">
+        <button class="btn btn-ghost" id="btn-dup-ip" onclick="filterDuplicateIPs()" title="Hiện người chơi trùng IP">⚠️ Trùng IP</button>
         <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ Xóa tất cả</button>
       </div>
     </div>
@@ -153,6 +168,7 @@
             <th>#</th>
             <th>Tên</th>
             <th>Giới tính</th>
+            <th>IP</th>
             <th>Điểm</th>
             <th>NPC</th>
             <th>Câu trả lời</th>
@@ -187,6 +203,7 @@ const $ = id => document.getElementById(id);
 let adminKey = sessionStorage.getItem('adminKey') || '';
 let allPlayers = [];
 let toastTimer = null;
+let dupFilterActive = false;
 
 // ── Auth ──
 function login() {
@@ -225,6 +242,7 @@ async function loadStats() {
   try {
     const s = await apiFetch('GET', 'stats');
     $('s-total').textContent = s.total_players || 0;
+    $('s-ips').textContent = s.unique_ips || 0;
     $('s-completed').textContent = s.completed || 0;
     $('s-max').textContent = s.max_score || 0;
     $('s-avg').textContent = Math.round(s.avg_score || 0);
@@ -237,10 +255,24 @@ async function loadPlayers() {
   try {
     const data = await apiFetch('GET', 'list');
     allPlayers = data.players || [];
+    // Tính số IP trùng
+    updateDupIpStats();
     $('table-status').textContent = allPlayers.length ? `${data.total} người chơi` : '';
     renderTable(allPlayers);
   } catch {
     $('table-status').textContent = 'Không tải được dữ liệu.';
+  }
+}
+
+function updateDupIpStats() {
+  const ipMap = {};
+  allPlayers.forEach(p => { if (p.ip_address) ipMap[p.ip_address] = (ipMap[p.ip_address] || 0) + 1; });
+  const dupIPs = Object.values(ipMap).filter(c => c > 1).length;
+  const dupEl = $('s-dup-ips');
+  if (dupIPs > 0) {
+    dupEl.textContent = `⚠️ ${dupIPs} IP trùng`;
+  } else {
+    dupEl.textContent = '';
   }
 }
 
@@ -256,17 +288,25 @@ function formatDate(val) {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+function getIpCounts() {
+  const map = {};
+  allPlayers.forEach(p => { if (p.ip_address) map[p.ip_address] = (map[p.ip_address] || 0) + 1; });
+  return map;
+}
+
 function renderTable(players) {
   const body = $('player-body');
   if (!players.length) {
-    body.innerHTML = '<tr><td colspan="10"><div class="empty"><div class="icon">📭</div>Chưa có người chơi nào.</div></td></tr>';
+    body.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="icon">📭</div>Chưa có người chơi nào.</div></td></tr>';
     return;
   }
+  const ipCounts = getIpCounts();
   body.innerHTML = players.map((p, i) => `
     <tr>
       <td>${i + 1}</td>
       <td><strong>${esc(p.name)}</strong></td>
       <td><span class="gender-badge gender-${p.gender}">${p.gender === 'male' ? '👦 Nam' : '👧 Nữ'}</span></td>
+      <td>${p.ip_address ? `<span class="ip-badge${ipCounts[p.ip_address] > 1 ? ' duplicate' : ''}" onclick="copyIP('${esc(p.ip_address)}')" title="Click để copy">${esc(p.ip_address)}${ipCounts[p.ip_address] > 1 ? ` <small>(${ipCounts[p.ip_address]})</small>` : ''}<span class="copy-icon">📋</span></span>` : '<span class="ip-no">—</span>'}</td>
       <td><strong>${p.score}</strong></td>
       <td>
         <div class="npc-progress">
@@ -285,10 +325,34 @@ function renderTable(players) {
   `).join('');
 }
 
+function copyIP(ip) {
+  navigator.clipboard.writeText(ip).then(() => toast('Đã copy IP: ' + ip, 'success')).catch(() => {});
+}
+
 function filterTable() {
+  dupFilterActive = false;
+  $('btn-dup-ip').style.background = '';
   const q = $('search').value.trim().toLowerCase();
-  const filtered = q ? allPlayers.filter(p => p.name.toLowerCase().includes(q)) : allPlayers;
+  const qip = $('search-ip').value.trim().toLowerCase();
+  let filtered = allPlayers;
+  if (q) filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+  if (qip) filtered = filtered.filter(p => p.ip_address && p.ip_address.toLowerCase().includes(qip));
   renderTable(filtered);
+}
+
+function filterDuplicateIPs() {
+  dupFilterActive = !dupFilterActive;
+  $('btn-dup-ip').style.background = dupFilterActive ? 'rgba(232,85,85,.2)' : '';
+  if (dupFilterActive) {
+    const ipCounts = getIpCounts();
+    const dupIPs = new Set(Object.keys(ipCounts).filter(ip => ipCounts[ip] > 1));
+    const filtered = allPlayers.filter(p => p.ip_address && dupIPs.has(p.ip_address));
+    renderTable(filtered);
+    $('table-status').textContent = `${filtered.length} người chơi trùng IP`;
+  } else {
+    renderTable(allPlayers);
+    $('table-status').textContent = `${allPlayers.length} người chơi`;
+  }
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
